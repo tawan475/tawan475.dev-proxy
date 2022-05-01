@@ -1,4 +1,5 @@
 # Ignore
+ssl/
 .vscode/
 
 # Logs
