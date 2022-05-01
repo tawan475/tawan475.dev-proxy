@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/tawan475/tawan475.dev-proxy#readme",
   "dependencies": {
+    "@tawan475/cloudflareip": "^1.0.3",
     "express": "^4.18.1",
     "http-proxy-middleware": "^2.0.6"
   }

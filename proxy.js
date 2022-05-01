@@ -8,5 +8,8 @@ const targets = {
 
 const app = express();
 
-app.use(createProxyMiddleware('/', { target: targets['https'] }));
+// require middlwares
+require('./libs/middlewares')(app);
+
+app.use(createProxyMiddleware('/', { target: targets['http'] }));
 app.listen(80);
