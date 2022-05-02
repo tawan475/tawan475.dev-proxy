@@ -1,30 +1,42 @@
 require('dotenv').config();
 const fs = require('fs');
+const createError = require('http-errors');
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const subdomain = require('express-subdomain');
 const targets = {
-    'api': "https://localhost:8000", // https
-    'http': "http://localhost:8080", // http - should never allow http
-    'https': "https://localhost:8443", // https
+    'api': "https://localhost:8000",
+    'http': "http://localhost:8080",
+    'https': "https://localhost:8443",
 }
 const proxy = (url) => {
     // allow insecure https for self sign localhost cert
     let isProduction = process.env.NODE_ENV === "production";
-    return createProxyMiddleware('/', { target: targets[url], secure: isProduction })
+    return createProxyMiddleware({ target: targets[url], secure: isProduction, onError: errorHandler })
 }
 
 const app = express();
-
-// require middlwares
 require('./libs/middlewares')(app);
 
-// require api
+
 app.use(subdomain('api', proxy('api')));
 
-// https without any subdomain should be the last one
-app.use(proxy('https'));
+let httpsProxy = proxy('https');
+app.use((req, res, next) => {
+    if (!req.subdomains.length) return httpsProxy(req, res, next);
+    next();
+});
 
+app.use(function (req, res, next) {
+    next(createError(404));
+});
+
+
+function errorHandler(err, req, res, next) {
+    if (!err) return;
+    res.status(err.status || 500).json({ status: err.status || 500, message: err.message || 'Internal Server Error' });
+};
+app.use(errorHandler);
 
 const options = process.env.NODE_ENV === "production" ? {
     key: fs.readFileSync('./libs/ssl/private.key.pem'),
