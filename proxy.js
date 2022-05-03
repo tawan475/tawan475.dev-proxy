@@ -16,6 +16,7 @@ const proxy = (url) => {
 }
 
 const app = express();
+app.dirname = __dirname;
 require('./libs/middlewares')(app);
 
 

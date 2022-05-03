@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 
 module.exports = (req, res, next) => {
     let startTime = process.hrtime.bigint();
@@ -37,7 +38,7 @@ module.exports = (req, res, next) => {
         // add time took to log string
         log += ` ${timeTook}`;
         console.log(log);
-        fs.appendFile("../request_logs.log", log + "\r\n", (err) => {
+        fs.appendFile(path.join(req.app.dirname, "./request_logs.log"), log + "\r\n", (err) => {
             if (err) console.log(err)
         });
     })
