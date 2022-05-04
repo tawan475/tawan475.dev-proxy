@@ -20,6 +20,8 @@ module.exports = (app) => {
             }
         };
 
+        req.domain = req.hostname.split('.').slice(-2).join('.');
+
         next()
     })
 
