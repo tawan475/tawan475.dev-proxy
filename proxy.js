@@ -6,6 +6,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const subdomain = require('express-subdomain');
 const targets = {
     'api': "https://localhost:8000",
+    'cdn': "https://localhost:8002",
     'http': "http://localhost:8080",
     'https': "https://localhost:8443",
 }
