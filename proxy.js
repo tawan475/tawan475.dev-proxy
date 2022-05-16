@@ -6,7 +6,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const subdomain = require('express-subdomain');
 const targets = {
     'api': "https://localhost:8000",
-    'cdn': "https://localhost:8002",
+    'go': "https://localhost:8002",
     'http': "http://localhost:8080",
     'https': "https://localhost:8443",
 }
@@ -22,6 +22,7 @@ require('./libs/middlewares')(app);
 
 
 app.use(subdomain('api', proxy('api')));
+app.use(subdomain('go', proxy('go')));
 
 let httpsProxy = proxy('https');
 app.use((req, res, next) => {
