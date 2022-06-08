@@ -43,8 +43,7 @@ app.use(errorHandler);
 
 const options = process.env.NODE_ENV === "production" ? {
     key: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/cert.pem'),
-    ca: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/chain.pem')
+    cert: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/fullchain.pem'),
 } : {
     key: fs.readFileSync('./libs/ssl/localhost/localhost.key'),
     cert: fs.readFileSync('./libs/ssl/localhost/localhost.crt')
