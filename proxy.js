@@ -4,6 +4,7 @@ const createError = require('http-errors');
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const subdomain = require('express-subdomain');
+const { v4: uuidv4 } = require('uuid');
 const targets = {
     'api': "https://localhost:8000",
     'go': "https://localhost:8002",
@@ -34,12 +35,24 @@ app.use(function (req, res, next) {
     next(createError(404));
 });
 
+// error handler
+app.use(function (err, req, res, next) {
+    if (!err) return; // no error
+    // render the error page
+	let errorID = uuidv4();
+	let errorRequestLog = `o:${req.get('origin') || "direct"} code:${res.statusCode} ${req.trustedip} ${req.method}:${req.protocol}://${req.get('host')}${req.url}`;
+	let errorMessage = `[${Date.now()}] errorID: ${errorID} | ${errorRequestLog}\r\n${err.stack}`
+	
+	console.log(errorMessage)
+	
+	fs.appendFile(path.join(req.app.dirname, "./error_logs.log"), errorMessage + "\r\n", (err) => {
+		if (err) console.log(err)
+	});
 
-function errorHandler(err, req, res, next) {
-    if (!err) return;
-    res.status(err.status || 500).json({ status: err.status || 500, message: err.message || 'Internal Server Error' });
-};
-app.use(errorHandler);
+	if (!err.status || err.status == 500) err.message = 'Internal Server Error';
+
+    res.status(err.status || 500).json({ status: err.status || 500, errorID: errorID, message: err.message || 'Internal Server Error' });
+});
 
 const options = process.env.NODE_ENV === "production" ? {
     key: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/privkey.pem'),
