@@ -1,10 +1,15 @@
 require('dotenv').config();
 const fs = require('fs');
+const path = require('path');
 const createError = require('http-errors');
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const subdomain = require('express-subdomain');
 const { v4: uuidv4 } = require('uuid');
+const ipaddr = require("ipaddr.js");
+const cloudflareIP = require('@tawan475/cloudflareip');
+const cfIP = new cloudflareIP();
+
 const targets = {
     'api': "https://localhost:8000",
     'go': "https://localhost:8002",
@@ -14,7 +19,14 @@ const targets = {
 const proxy = (url) => {
     // allow insecure https for self sign localhost cert
     let isProduction = process.env.NODE_ENV === "production";
-    return createProxyMiddleware({ target: targets[url], secure: isProduction, onError: errorHandler })
+    return createProxyMiddleware({ target: targets[url], secure: isProduction, on: {
+		error: errorHandler,
+		proxyReq: (proxyReq, req, res) => {
+			if (req.headers['cf-connecting-ip']) proxyReq.setHeader('cf-connecting-ip', req.headers['cf-connecting-ip']);
+			let incomingIp = req.socket.remoteAddress || req.remoteAddress;
+			proxyReq.setHeader('x-incoming-ip', incomingIp);
+		},
+	} })
 }
 
 const app = express();
@@ -57,11 +69,11 @@ function errorHandler(err, req, res, next) {
 app.use(errorHandler);
 
 const options = process.env.NODE_ENV === "production" ? {
-    key: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev-0001/fullchain.pem'),
+    key: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/tawan475.dev/fullchain.pem'),
 } : {
-    key: fs.readFileSync('./libs/ssl/localhost/localhost.key'),
-    cert: fs.readFileSync('./libs/ssl/localhost/localhost.crt')
+    key: fs.readFileSync('../ssl/localhost.key'),
+    cert: fs.readFileSync('../ssl/localhost.crt')
 }
 
 require('http').createServer(app).listen(80, () => {
