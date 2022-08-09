@@ -4,6 +4,8 @@ const logger = require('../libs/logger');
 
 module.exports = (app) => {
     app.use((req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "https://tawan475.dev");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         res.setHeader('X-Powered-By', 'tawan475');
 
         if (req.socket.localAddress !== req.socket.remoteAddress) {
