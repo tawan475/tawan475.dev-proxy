@@ -6,26 +6,13 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const subdomain = require('express-subdomain');
 const { v4: uuidv4 } = require('uuid');
-const ipaddr = require("ipaddr.js");
-const cloudflareIP = require('@tawan475/cloudflareip');
-const cfIP = new cloudflareIP();
 
-const targets = {
-    'api': "https://localhost:8000",
-    'go': "https://localhost:8002",
-    'http': "http://localhost:8080",
-    'https': "https://localhost:8443",
-}
+const targets = require('./proxy.json');
 const proxy = (url) => {
     // allow insecure https for self sign localhost cert
     let isProduction = process.env.NODE_ENV === "production";
     return createProxyMiddleware({ target: targets[url], secure: isProduction, on: {
-		error: errorHandler,
-		proxyReq: (proxyReq, req, res) => {
-			if (req.headers['cf-connecting-ip']) proxyReq.setHeader('cf-connecting-ip', req.headers['cf-connecting-ip']);
-			let incomingIp = req.socket.remoteAddress || req.remoteAddress;
-			proxyReq.setHeader('x-incoming-ip', incomingIp);
-		},
+		error: errorHandler
 	} })
 }
 
@@ -33,9 +20,10 @@ const app = express();
 app.dirname = __dirname;
 require('./libs/middlewares')(app);
 
-
-app.use(subdomain('api', proxy('api')));
-app.use(subdomain('go', proxy('go')));
+for (subdomainName of Object.keys(targets)) {
+    if (subdomainName === 'https' || subdomainName === 'http') continue;
+    app.use(subdomain(subdomainName, proxy(subdomainName)));
+}
 
 let httpsProxy = proxy('https');
 app.use((req, res, next) => {
